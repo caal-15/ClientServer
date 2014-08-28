@@ -18,43 +18,62 @@ int main (){
     string command = "";
    	string id = "";
 	string secondId = "";
-	string ammount = "";
+	string amount = "";
 	string ans = "";
 	bool logged = 0;
     zmsg_t* req = zmsg_new();
-    
+    zmsg_t* resp = zmsg_new();
     while(1){
     	if(logged){
-			cout << "Logged in" << endl << endl;
-			break;
+			cout << "You are now logged, here are your options:" << endl;
+			cout << "1. Enter 'check' to view the amount of funds in account" << endl;
+			cout << "2. Enter 'add' and an amount to add funds to your account" << endl;
+			cout << "3. Enter 'withdraw' and an amount to remove funds from your account" << endl;
+			cout << "4. Enter 'transfer', an amount, and another account to transfer funds" << endl;
+			cout << "Enter 'exit' to finish"<< endl;
+			cin >> command;
+			zmsg_addstr(req, command.c_str());
+			if(command == "exit") break;
+			else if (command == "check"){
+				zmsg_addstr(req, id.c_str());
+							
+			}
+			else if (command == "add" || command == "withdraw"){
+				zmsg_addstr(req, id.c_str());
+				cin >> amount;
+				zmsg_addstr(req, amount.c_str());			
+			}
+			else if(command == "transfer"){
+				zmsg_addstr(req, id.c_str());
+				cin >> amount;
+				cin >> secondId;
+				zmsg_addstr(req, amount.c_str());
+				zmsg_addstr(req, secondId.c_str());
+			}			
+			zmsg_send(&req, requester);
+			cout << "Sending message" << endl;
+			resp = zmsg_recv(requester);
+			ans =  zmsg_popstr(resp);
+			cout << "Answer received: " << ans << endl << endl;
+			
 		}
 		
 		else{
 			cout << "Welcome to InseBank, here are your options:" << endl;
-			cout << "1. Enter 'create' and your id to create an account" << endl;
-			cout << "2. Enter 'login' and your id to gain access to your account" << endl;  
+			cout << "1. Enter your id to login, an account will be created if it doesn't exist" << endl;
 			cout << "Enter 'exit' to finish"<< endl;
-			cin >> command;
-			if (command == "exit") break;
-			else if(command == "create"){
-				cin >> id;
-				zmsg_addstr(req, "create");
-				zmsg_addstr(req, id.c_str());
-				
-			}
-			else if(command == "login"){
-				cin >> id;
-				cout << id << endl << endl;
-			}
+			cin >> id;
+			zmsg_addstr(req, "login");
+			zmsg_addstr(req, id.c_str());
 			zmsg_send(&req, requester);
 			cout << "Sending message" << endl;
-			zmsg_t* resp = zmsg_recv(requester);
+			resp = zmsg_recv(requester);
 			ans =  zmsg_popstr(resp);
 			cout << "Answer received: " << ans << endl << endl;
 			if(ans == "success") logged = 1;
 		}
-        	    	
-        
+        zmsg_destroy(&req);    	
+        req = zmsg_new();
 	
     }
     

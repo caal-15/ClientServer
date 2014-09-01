@@ -19,7 +19,7 @@ int main (){
    	string id = "";
 	string secondId = "";
 	string amount = "";
-	string ans = "";
+	char* ans = (char*) malloc(sizeof(char)*256);
 	bool logged = 0;
     zmsg_t* req = zmsg_new();
     zmsg_t* resp = zmsg_new();
@@ -55,6 +55,7 @@ int main (){
 			resp = zmsg_recv(requester);
 			ans =  zmsg_popstr(resp);
 			cout << "Answer received: " << ans << endl << endl;
+			free(ans);
 			
 		}
 		
@@ -70,10 +71,15 @@ int main (){
 			resp = zmsg_recv(requester);
 			ans =  zmsg_popstr(resp);
 			cout << "Answer received: " << ans << endl << endl;
-			if(ans == "success") logged = 1;
+			if(strcmp(ans, "success") == 0) logged = 1;
+			free(ans);
 		}
         zmsg_destroy(&req);    	
         req = zmsg_new();
+        zmsg_destroy(&resp); 
+        cout<< "Press enter to continue..." << endl << endl;   	
+        getchar();
+        cin.get();
 	
     }
     

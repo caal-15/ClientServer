@@ -71,11 +71,11 @@ int main(int argc, char** argv){
 	outmsg = zmsg_new();
 	zframe_t* id;
 	zmq_pollitem_t items[] = {{server, 0, ZMQ_POLLIN, 0}};
-	cout << "before while " << endl;
+	
 	while(true){
 		zmq_poll(items,1,10*ZMQ_POLL_MSEC);
 		if(items[0].revents & ZMQ_POLLIN){
-			cout << "on if while " << endl;
+			
 			inmsg = zmsg_recv(server);
 			zmsg_print(inmsg);
 			id = zmsg_pop(inmsg);

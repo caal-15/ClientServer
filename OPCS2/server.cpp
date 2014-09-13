@@ -9,6 +9,7 @@ unordered_map<string, vector<zframe_t*>> workers;
 void addWorker(zframe_t* id, zmsg_t* incmsg, zmsg_t* outmsg){
 	char* s = zmsg_popstr(incmsg);
 	string op = s;
+	
 	free(s);
 	workers[op].push_back(zframe_dup(id));
 	zmsg_append(outmsg, &id);
@@ -39,39 +40,50 @@ int main(void) {
     void* client = zsocket_new(context,ZMQ_ROUTER);
 	zsocket_bind(client, "tcp://*:5556");
 	
-	zmsg_t* incmsg;
+	
 	
 	
 	zmq_pollitem_t items[] = {{client, 0, ZMQ_POLLIN, 0}, {server, 0, ZMQ_POLLIN, 0}};
-	cout << "before while" << endl;
+	
 	while(true){
-		zmq_poll(items,2,10*ZMQ_POLL_MSEC);
+		zmq_poll (items, 2, 10*ZMQ_POLL_MSEC);
     	if(items[0].revents & ZMQ_POLLIN){
+    		cout << "I'm gonna kill myself" << endl;
     		zmsg_t* outmsg = zmsg_new();
-    		
-    		incmsg = zmsg_recv(client);
+    		zmsg_t* incmsg = zmsg_recv(client);
     		zmsg_print(incmsg);
     		dispatchWorker(incmsg, outmsg, client, server);
-    		
-    		cout << "Dafuq" << endl;
-    		
-    		zmsg_destroy(&incmsg);
-    		
-			
-			
+    		//cout << "here!" << endl;
+    				
+    		zmsg_destroy(&incmsg);		
     		
     	}
-    	else if (workers.size() > 0){
-    		this_thread::sleep_for(chrono::seconds(1));
+    	if (items[1].revents & ZMQ_POLLIN){
+    		cout << "I'm gonna kill myself 2" << endl;
+    		zmsg_t* incmsg = zmsg_recv(server);
+    		zmsg_print(incmsg);
+    		zframe_t* cid = zmsg_pop(incmsg);
+    		//SI SE AÑADE EL ID DEL CLIENTE AL MENSAJE A ENVIAR SE PARA EL HILO DE EJECUCIÓN
+    		//COMENTAR PARA NO DESTRUIR ID INMEDIATAMENTE
+    		zframe_destroy(&cid); 
+    		char* s = zmsg_popstr(incmsg);
+    		
     		zmsg_t* outmsg = zmsg_new();
-    		zframe_t* w_id = zframe_dup(workers["add"][0]);
-    		zmsg_append(outmsg, &w_id);
-    		zmsg_addstr(outmsg, "Ficty");
+    		zmsg_append(outmsg, &workers["add"][0]);
     		zmsg_addstr(outmsg, "op");
-    		zmsg_addstr(outmsg, "3 + 3");
+    		zmsg_addstr(outmsg, s);
+    		//DESCOMENTAR PARA AÑADIR EL ID DEL CLIENTE AL MENSAJE
+    		//zmsg_append(outmsg, &cid);
     		zmsg_print(outmsg);
-    		cout <<"Here's the fault but i don't know why!"<<endl;
-    		zmsg_send(&outmsg, client);		
+    		   		
+    		
+    		zmsg_send(&outmsg, client);
+    		
+    		free(s);
+    		//DESCOMENTAR PARA DESTRUIR EL FRAME UNA VEZ ENVIADO EL MENSAJE
+    		//zframe_destroy(&cid);
+    		zmsg_destroy(&incmsg);
+    		
     		
     		
     		

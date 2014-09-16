@@ -7,8 +7,8 @@ using namespace std;
 
 int main(void) {
   zctx_t* context = zctx_new();
-  void* client = zsocket_new(context,ZMQ_DEALER);
-  zsocket_connect(client, "tcp://localhost:5555");
+  void* client = zsocket_new(context, ZMQ_DEALER);
+  zsocket_connect(client, "tcp://localhost:5556");
   
   string op = "";
   

@@ -16,4 +16,4 @@ client: client.cpp
 	$(CC) -std=c++11 -lzmq	-lczmq -o client client.o
 		
 clean:
-	rm -f server slave client *.o *~ 
+	rm -f server slave client *.o *~ *.swp

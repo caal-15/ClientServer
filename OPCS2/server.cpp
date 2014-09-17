@@ -22,21 +22,66 @@ void addWorker(zframe_t* id, zmsg_t* incmsg, void* slaves){
 }
 
 
-/**
-*  outmsg must to be freed in this operation
-*/
 void dispatchWorker(zmsg_t* incmsg, void* slaves, void* clients){
     zframe_t* id = zmsg_pop(incmsg);
     char* s = zmsg_popstr(incmsg);
     if (strcmp(s, "addworker") == 0) {
         addWorker(id, incmsg, slaves);
         
-    } else {
-        cout << "TODO: send operations " << endl;  
+    } 
+    else if (strcmp(s, "send") == 0) {
+    	zmsg_send(&incmsg, clients);	        
     }
     
-   
+    free(s);
 }
+
+void getWorker(zframe_t* cid, string op, zmsg_t* incmsg, void* slaves){
+	zframe_t* wid = zframe_dup(workers[op].back()); 
+	zframe_t* temp = zframe_dup(workers[op].back());
+	workers[op].pop_back();
+	workers[op].insert(workers[op].begin(), temp);
+	
+	char* s1 = zmsg_popstr(incmsg);
+	char* s2 = zmsg_popstr(incmsg);
+	
+	zmsg_t* outmsg = zmsg_new();
+	zmsg_append(outmsg, &wid);
+	zmsg_append(outmsg, &cid);
+	zmsg_addstr(outmsg, op.c_str());
+	zmsg_addstr(outmsg, s1);
+	zmsg_addstr(outmsg, s2);
+	
+	cout << "sending to" << endl;
+	zmsg_print(outmsg);
+	
+	zmsg_send(&outmsg, slaves);
+	
+	free(s1);
+	free(s2);
+}
+
+void dispatchClient(zmsg_t* incmsg, void* slaves, void* clients){
+	zframe_t* cid = zmsg_pop(incmsg);
+	char* s = zmsg_popstr(incmsg);
+	string op = s;
+		
+	if(workers[op].size() == 0){
+		zmsg_t* outmsg = zmsg_new();
+		
+		zmsg_append(outmsg, &cid);
+		zmsg_addstr(outmsg, "No workers exist for that op");
+		
+		zmsg_send(&outmsg, clients);
+	}
+	else{
+		getWorker(cid, op, incmsg, slaves);		
+	}
+	zmsg_destroy(&incmsg);
+	free(s);
+}
+
+
 
 int main(void) {
     zctx_t* context = zctx_new();
@@ -63,20 +108,7 @@ int main(void) {
             zmsg_t* incmsg = zmsg_recv(clients);
             zmsg_print(incmsg);
             
-            zframe_t* cid = zmsg_pop(incmsg);
-            char* s = zmsg_popstr(incmsg);
-	    	zframe_t* wid = zframe_dup(workers["add"][0]);
-            
-            zmsg_t* outmsg = zmsg_new();
-            zmsg_append(outmsg, &wid);
-            zmsg_append(outmsg, &cid);
-            zmsg_addstr(outmsg, s);
-              
-            zmsg_send(&outmsg, slaves);
-            
-            
-            zmsg_destroy(&incmsg);
-            free(s);
+            dispatchClient(incmsg, slaves, clients);
         }
     }
     

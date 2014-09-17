@@ -3,32 +3,56 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-void op(zmsg_t* incmsg, zmsg_t* outmsg){
-    char* buffer = zmsg_popstr(incmsg);
-    char op;
-    int x, y, ans;
-    sscanf(buffer, "%i %c %i", &x, &op, &y );
-    free(buffer);
-    if(op == '+'){
-        ans = x + y;
+int operate(int x, int y, string op){
+    
+    if(op == "add"){
+        return x + y;
     }
-    else if(op == '-'){
-        ans = x - y;
+    else if(op == "sub"){
+        return x - y;
     }
-    else if(op == '*'){
-        ans = x*y;
+    else if(op == "mul"){
+        return x*y;
     }
-    else if(op == '/'){
-        ans = x / y;
+    else if(op == "div"){
+        return x / y;
     }
-    else{
-    	//TODO: implement this fucker
-       }
+    
 }
 
-void dispatch(zmsg_t* incmsg, void* server){
+void dispatch(zmsg_t* incmsg, void* server, string w_type){
 	zframe_t* cid = zmsg_pop(incmsg);
-	return;
+	int x, y;
+		
+	char* s = zmsg_popstr(incmsg);
+	string op = s;
+	
+	char* s1 = zmsg_popstr(incmsg);
+	x = atoi(s1);
+	
+	char* s2 = zmsg_popstr(incmsg);
+	y = atoi(s2);
+	
+	zmsg_t* outmsg = zmsg_new();
+	zmsg_addstr(outmsg, "send");
+	zmsg_append(outmsg, &cid);
+	
+	if(op != w_type){
+		zmsg_addstr(outmsg, "Not supported");
+	}
+	else{
+		char* ans = (char*) malloc(sizeof(char)* 256);
+		sprintf(ans, "%d", operate(x, y, op));
+		zmsg_addstr(outmsg, ans);
+		free(ans);
+	}
+	
+	zmsg_send(&outmsg, server);
+	
+	zmsg_destroy(&incmsg);
+	free(s);
+	free(s1);
+	free(s2);
 }
 
 
@@ -73,7 +97,7 @@ int main(int argc, char** argv){
             zmsg_t* incmsg = zmsg_recv(server);
             zmsg_print(incmsg);
             
-            dispatch(incmsg, server);
+            dispatch(incmsg, server, w_type);
             
         }
         

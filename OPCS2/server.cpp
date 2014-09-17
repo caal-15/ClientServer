@@ -14,7 +14,7 @@ void addWorker(zframe_t* id, zmsg_t* incmsg, void* slaves){
     
     zmsg_append(outmsg, &id);
     zmsg_addstr(outmsg, "Thanks");
-    zmsg_print(outmsg);
+        
     zmsg_send(&outmsg, slaves);
     
     free(s);
@@ -52,8 +52,9 @@ void getWorker(zframe_t* cid, string op, zmsg_t* incmsg, void* slaves){
 	zmsg_addstr(outmsg, s1);
 	zmsg_addstr(outmsg, s2);
 	
-	cout << "sending to" << endl;
+	cout << "Sending to:" << endl;
 	zmsg_print(outmsg);
+	cout << endl;
 	
 	zmsg_send(&outmsg, slaves);
 	
@@ -96,17 +97,22 @@ int main(void) {
     while(true){
         zmq_poll (items, 2, 10*ZMQ_POLL_MSEC);
         if(items[0].revents & ZMQ_POLLIN){  // Slave code
-            cout << "I'm gonna kill myself" << endl;
+            cout << "I'm gonna kill myself (Workers)" << endl;
+            
             zmsg_t* incmsg = zmsg_recv(slaves);
             zmsg_print(incmsg);
+            cout << endl;
+            
             dispatchWorker(incmsg, slaves, clients);
                   
             
         }
         if (items[1].revents & ZMQ_POLLIN){ // Client code
-            cout << "I'm gonna kill myself 2" << endl;
+            cout << "I'm gonna kill myself too (Clients)" << endl;
+            
             zmsg_t* incmsg = zmsg_recv(clients);
             zmsg_print(incmsg);
+            cout << endl;
             
             dispatchClient(incmsg, slaves, clients);
         }

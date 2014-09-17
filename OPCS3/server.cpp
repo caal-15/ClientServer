@@ -75,6 +75,10 @@ void getWorker(void* slaves){
 					
 					zmsg_prepend(outmsg, &wid);
 					
+					cout << "Sent to: " << ops[i] << " " << j << endl;
+					zmsg_print(outmsg);
+					cout << endl;
+					
 					zmsg_send(&outmsg, slaves);
 					
 					states[ops[i]][j] = 1;
@@ -137,17 +141,22 @@ int main(void) {
     while(true){
         zmq_poll (items, 2, 10*ZMQ_POLL_MSEC);
         if(items[0].revents & ZMQ_POLLIN){  // Slave code
-            cout << "I'm gonna kill myself" << endl;
+            cout << "I'm gonna kill myself (Workers)" << endl;
+            
             zmsg_t* incmsg = zmsg_recv(slaves);
             zmsg_print(incmsg);
+            cout << endl;
+            
             dispatchWorker(incmsg, slaves, clients);
                   
             
         }
         if (items[1].revents & ZMQ_POLLIN){ // Client code
-            cout << "I'm gonna kill myself 2" << endl;
+            cout << "I'm gonna kill myself too (Clients)" << endl;
+            
             zmsg_t* incmsg = zmsg_recv(clients);
             zmsg_print(incmsg);
+            cout << endl;
             
             dispatchClient(incmsg, slaves, clients);
         }

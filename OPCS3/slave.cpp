@@ -63,10 +63,17 @@ int main(int argc, char** argv){
     zctx_t* context = zctx_new();
     void* server = zsocket_new(context, ZMQ_DEALER);
     zsocket_connect(server, "tcp://localhost:5555");
+    
     string w_type = "";
     string w_num = "";
+    int sleep = 0;
+    
     if(argc == 2)
         w_type = argv[1];
+    else if (argc == 3){
+    	w_type = argv[1];
+    	sleep = atoi(argv[2]);
+    }
     else 
         w_type = "add";
     
@@ -108,7 +115,8 @@ int main(int argc, char** argv){
             cout<< "Message received" << endl;
             zmsg_t* incmsg = zmsg_recv(server);
             zmsg_print(incmsg);
-            
+            cout << "waiting for: " << sleep << " seconds" << endl;
+            this_thread::sleep_for (chrono::seconds(sleep));
             dispatch(incmsg, server, w_type, w_num);
             
         }
